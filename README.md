@@ -6,7 +6,7 @@ Histo-Planner : A Real-time Local Planner for MAVs Teleoperation based on Histog
 
 <video src="https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/video/video_audio.mp4" controls="controls" width="500" height="300"></video>
 
-**Video Links:** [YouTube](https://youtu.be/UKoaGW7t7Dk)
+**Video Links:** [YouTube](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/video/video_audio.mp4)
 
 
 ## Table of Contents
