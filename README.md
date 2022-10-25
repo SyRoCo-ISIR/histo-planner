@@ -25,7 +25,7 @@ Please kindly give us a star :star:, if you find this work useful or interesting
 
 ## 1. Quick Start
 
-Compiling tests passed on ubuntu **16.04, 18.04 and 20.04** with ros installed. Take Ubuntu 20.04 as an example. If you want only to install the Histo-planner, you can just execute the following commands one by one. If you want to try the complete [DroneSys](https://github.com/SyRoCo-ISIR/DroneSys.git), you may check the detailed [instruction](#3-Setup-and-Config) to setup it.
+Compiling tests passed on ubuntu **18.04 and 20.04** with ros installed. Take Ubuntu 20.04 as an example. If you want only to install the Histo-planner, you can just execute the following commands one by one. If you want to try the complete [DroneSys](https://github.com/SyRoCo-ISIR/DroneSys.git), you may check the detailed [instruction](#3-Setup-and-Config) to setup it.
 ```
 sudo apt-get install ros_${ROS_VERSION_NAME}_nlopt
 git clone https://github.com/SyRoCo-ISIR/histo-planner
