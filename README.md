@@ -197,12 +197,7 @@ Run our planner and the Gazebo simulation platform with ```roslaunch```:
 ```
 
 
-Normally, you will find the randomly generated map and the drone model in ```Rviz```. At this time, you can trigger the planner using the ```3D Nav Goal``` tool. When a point is clicked in ```Rviz```, a new trajectory will be generated immediately and executed by the drone. A sample is displayed below:
-
-<!-- add some gif here -->
- <p id="demo1" align="center">
-  <img src="files/ral19_3.gif" width = "480" height = "270"/>
- </p>
+Normally, you will find the randomly generated map and the drone model in ```Rviz```. At this time, you can trigger the planner using the ```3D Nav Goal``` tool. When a point is clicked in ```Rviz```, a new trajectory will be generated immediately and executed by the drone. 
 
 
 ## Acknowledgements
