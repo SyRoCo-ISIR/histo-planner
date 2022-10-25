@@ -3,208 +3,200 @@
 Histo-Planner : A Real-time Local Planner for MAVs Teleoperation based on Histogram of Obstacle Distribution
 
 **Histo-Planner** is a histogram-based local planner without relying on the global 3D occupancy grid, which is designed to work on MAVs with limited computational power for tele-operation. It has a significantly lower total planning time compared to state-of-the-art methods ([Ego-planner](https://github.com/ZJU-FAST-Lab/ego-planner) and [Fast-Planner](https://github.com/HKUST-Aerial-Robotics/Fast-Planner)). The map update time will remain around 0.3 ms.
-<video width="320" height="240" controls>
-    <source src="https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/video/video_audio.mp4" type="video/mp4">
-</video>
-**Video Links:** [video_1](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/video/video_audio.mp4)
 
+**Video Links:** 
+ - The [video](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/video/video_audio.mp4) 
+
+Please kindly give us a star :star:, if you find this work useful or interesting. We take great efforts to develope and maintain it, thanks!:grinning:
 
 ## Table of Contents
 
 * [Quick Start](#1-Quick-Start)
 * [Algorithms and Papers](#2-Algorithms-and-Papers)
 * [Setup and Config](#3-Setup-and-Config)
-* [Run Simulations](#4-run-simulations)
-* [Use in Your Application](#5-use-in-your-application)
-* [Updates](#6-updates)
-* [Known issues](#known-issues)
+
 
 
 ## 1. Quick Start
 
-The project has been tested on Ubuntu 16.04, 18.04, and 20.04. Take Ubuntu 20.04 as an example, run the following commands to setup:
-
-**Step 1** Install [nlopt]() which is used for optimization.
+Compiling tests passed on ubuntu **16.04, 18.04 and 20.04** with ros installed. Take Ubuntu 20.04 as an example. If you want only to install the Histo-planner, you can just execute the following commands one by one. If you want to try the complete [DroneSys](https://github.com/SyRoCo-ISIR/DroneSys.git), you may check the detailed [instruction](#3-Setup-and-Config) to setup it.
 ```
-	git clone https://github.com/stevengj/nlopt.git
-	cd nlopt  
-	mkdir build  
-	cd build  
-	cmake ..  
-	make  
-	sudo make install 
+sudo apt-get install ros_${ROS_VERSION_NAME}_nlopt
+git clone https://github.com/SyRoCo-ISIR/histo-planner
+catkin_make
+roslaunch histo_planner histo-planner.launch
 ```
-**Step 2** Clone and compile the [DroneSys]() from github, which is a complete ROS system for drones, in cooperation with PX4 flight control system.
-```
-    git clone https://github.com/SyRoCo-ISIR/DroneSys.git
-```
-**Step 3** Run a simulation.
-
-You may check the detailed [instruction](#3-setup-and-config) to setup the project. 
-After compilation you can start the visualization by: 
-
-```
-  source devel/setup.bash && roslaunch plan_manage rviz.launch
-```
-and start a simulation (run in a new terminals): 
-```
-  source devel/setup.bash && roslaunch plan_manage kino_replan.launch
-```
-You will find the random map and the drone in ```Rviz```. You can select goals for the drone to reach using the ```2D Nav Goal``` tool. A sample simulation is showed [here](#demo1).
-
 
 ## 2. Algorithms and Papers
 
-The project contains a collection of robust and computationally efficient algorithms for quadrotor fast flight:
-* Kinodynamic path searching
-* B-spline-based trajectory optimization
-* Topological path searching and path-guided optimization
-* Perception-aware planning strategy (to appear)
+The algorithm provides a robust and computationally efficient local obstacle avoidance trajectory planning for tele-operated MAVs.
 
-These methods are detailed in our papers listed below. 
+The method is detailed in our paper below.
+- **Histo-Planner : A Real-time Local Planner for MAVs Teleoperation based on Histogram of Obstacle Distribution**, Ze Wang, Zhenyu Gao, Jingang Qu, Pascal Morin, IEEE International Conference on Robotics and Automation (__ICRA__), 2023. (Under review)
 
-Please cite at least one of our papers if you use this project in your research: [Bibtex](files/bib.txt).
+The main programs in the algorithm are implemented in __histo_planner__ (To be Open):
 
-- [__Robust and Efficient Quadrotor Trajectory Generation for Fast Autonomous Flight__](https://ieeexplore.ieee.org/document/8758904), Boyu Zhou, Fei Gao, Luqi Wang, Chuhao Liu and Shaojie Shen, IEEE Robotics and Automation Letters (**RA-L**), 2019.
-- [__Robust Real-time UAV Replanning Using Guided Gradient-based Optimization and Topological Paths__](https://arxiv.org/abs/1912.12644), Boyu Zhou, Fei Gao, Jie Pan and Shaojie Shen, IEEE International Conference on Robotics and Automation (__ICRA__), 2020.
-- [__RAPTOR: Robust and Perception-aware Trajectory Replanning for Quadrotor Fast Flight__](https://arxiv.org/abs/2007.03465), Boyu Zhou, Jie Pan, Fei Gao and Shaojie Shen, IEEE Transactions on Robotics (__T-RO__). 
+- __histo_planning__: Planning manager that schedule and call the mapping and planning programs. The whole algorithm starts with receiving the message and ends with publishing the track reference control, and contains a total of four threads except for listening to the message: Histogram update, goal update for teleoperation, trajectory generation and safety monitoring, and reference trajectory tracking control. The last three are done in the program.
+- __histogram__: Map service and guidance point generation. This program contains a separate thread to update the local spatial obstacle distribution and generate histograms in real time. According to the histogram, when called, the program provides local spatial gradient fields and obstacle avoidance optimal guidance point.
+- __bspline__: A implementation of the B-spline-based trajectory representation. The cubic Hamiton curve is reparameterized as a B-spline.
+- __bspline_optimizer__: The gradient-based trajectory optimization using B-spline trajectory.
 
 
-All planning algorithms along with other key modules, such as mapping, are implemented in __fast_planner__:
-
-- __plan_env__: The online mapping algorithms. It takes in depth image (or point cloud) and camera pose (odometry) pairs as input, do raycasting to update a probabilistic volumetric map, and build an Euclidean signed distance filed (ESDF) for the planning system. 
-- __path_searching__: Front-end path searching algorithms. 
-  Currently it includes a kinodynamic path searching that respects the dynamics of quadrotors.
-  It also contains a sampling-based topological path searching algorithm to generate multiple topologically distinctive paths that capture the structure of the 3D environments. 
-- __bspline__: A implementation of the B-spline-based trajectory representation.
-- __bspline_opt__: The gradient-based trajectory optimization using B-spline trajectory.
-- __active_perception__: Perception-aware planning strategy, which enable to quadrotor to actively observe and avoid unknown obstacles, to appear in the future.
-- __plan_manage__: High-level modules that schedule and call the mapping and planning algorithms. Interfaces for launching the whole system, as well as the configuration files are contained here.
-
-Besides the folder __fast_planner__, a lightweight __uav_simulator__ is used for testing.
+Besides the folder __histo_planner__, a lightweight __planning_simulator__ is used for testing.
 
 
 ## 3. Setup and Config
 
 ### Prerequisites
 
-1. Our software is developed and tested in Ubuntu 16.04(ROS Kinetic) and 18.04(ROS Melodic). Follow the documents to install [Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) or [Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu) according to your Ubuntu version.
-   
-2. We use [**NLopt**](https://nlopt.readthedocs.io/en/latest/NLopt_Installation) to solve the non-linear optimization problem. The __uav_simulator__ depends on the C++ linear algebra library __Armadillo__. The two dependencies can be installed by the following command, in which `${ROS_VERSION_NAME}` is the name of your ROS release.
-``` 
-sudo apt-get install libarmadillo-dev ros_${ROS_VERSION_NAME}_nlopt
+1. Our software is developed and tested in Ubuntu 16.04(ROS Kinetic), 18.04(ROS Melodic) and 20.04(ROS Noetic). Follow the documents to install [Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu), [Melodic](http://wiki.ros.org/melodic/Installation/Ubuntu) or [Noetic](http://wiki.ros.org/noetic/Installation/Ubuntu) according to your Ubuntu version. 
+Histo-planner does not rely on the following packages, but if you are willing to try the complete [DroneSys](https://github.com/SyRoCo-ISIR/DroneSys.git), please make sure the following packages are installed.
+```
+	ros-${ROS_VERSION_NAME}-ros-base
+	ros-${ROS_VERSION_NAME}-gazebo-ros
+	ros-${ROS_VERSION_NAME}-camera-info-manager
+	ros-${ROS_VERSION_NAME}-xacro
+	ros-${ROS_VERSION_NAME}-tf2-ros
+	ros-${ROS_VERSION_NAME}-tf2-eigen
+	ros-${ROS_VERSION_NAME}-mavros-msgs
+	ros-${ROS_VERSION_NAME}-mavros
+	ros-${ROS_VERSION_NAME}-mavros-extras
+	ros-${ROS_VERSION_NAME}-tf
+	ros-${ROS_VERSION_NAME}-cv-bridge
+	libarmadillo-dev
+	ros-${ROS_VERSION_NAME}-rviz
+	ros-${ROS_VERSION_NAME}-pcl-ros
+	ros-${ROS_VERSION_NAME}-hector-trajectory-server
+	ros-${ROS_VERSION_NAME}-octomap
+	ros-${ROS_VERSION_NAME}-octomap-msgs
+	ros-${ROS_VERSION_NAME}-image-transport
+	ros-${ROS_VERSION_NAME}-image-transport-plugins
+	ros-${ROS_VERSION_NAME}-ddynamic-reconfigure
+	ros-${ROS_VERSION_NAME}-vrpn-client-ros
+	ros-${ROS_VERSION_NAME}-velodyne-gazebo-plugins
+	ros-${ROS_VERSION_NAME}-roslint
+```
+
+2. We use [**NLopt**](https://nlopt.readthedocs.io/en/latest/NLopt_Installation) as the optimization solver in Histo-planner to solve the non-linear optimization problem, which can be installed by the following commands.
+```
+  git clone https://github.com/stevengj/nlopt.git
+  cd nlopt && mkdir build && cd build  
+  cmake ..  
+  make  
+  sudo make install 
+```
+
+3. The DroneSys has been tested to communicate with PX4 via the mavlink protocol. In order to test the complete DroneSys, we need to install the PX4 system, but it is not necessary for the Histo-planner. The following installation is for the DroneSys only:
+```
+  git clone https://github.com/w407022008/Firmware_PX4_v1.12.3.git --depth 1 PX4_v1.12.3 --recursive
+  cd PX4_v1.12.3
+	git tag v1.12.3
+	sudo bash Tools/setup/ubuntu.sh
+  # Restart the computer on completion. And then
+	cd PX4_v1.12.3 && sudo make px4_sitl_default
+```
+
+4. Installing RealSense SDK (DroneSys dependent but Histo-planner):
+```
+  sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev at
+  ## LibRealSense v2.50.0 for example, which matchs with realsense-ros v2.3.2:
+  wget https://github.com/IntelRealSense/librealsense/archive/refs/tags/v2.50.0.zip
+  unzip v2.50.0.zip && rm v2.50.0.zip
+  cd librealsense-2.50.0
+  ./scripts/setup_udev_rules.sh
+  mkdir build && cd build
+  
+  sudo apt install xorg-dev libglu1-mesa-dev ## if missing RandR
+  sudo apt install libusb-1.0-0-dev ## if missing config.h
+
+  cmake ../ -DFORCE_RSUSB_BACKEND=true -DCMAKE_BUILD_TYPE=release -DBUILD_EXAMPLES=true -DBUILD_GRAPHICAL_EXAMPLES=true
+  sudo make uninstall && make clean && make && sudo make install
+  # test it, if you want
+  realsense_viwer
+```
+
+5. Installing [ORB-SLAM3](https://github.com/w407022008/ORB_SLAM3) (DroneSys dependent but Histo-planner):
+
+6. Installing Ceres for VINS (DroneSys dependent but Histo-planner):
+```
+  sudo apt-get install libgoogle-glog-dev libgflags-dev libatlas-base-dev libeigen3-dev 
+  git clone https://ceres-solver.googlesource.com/ceres-solver
+  cd ceres-solver
+  mkdir build && cd build
+  cmake ..
+  make
+  sudo make install
 ```
 
 
+### Build the DroneSys on ROS
 
-### Build on ROS
-
-After the prerequisites are satisfied, you can clone this repository to your catkin workspace and catkin_make. A new workspace is recommended:
+After the prerequisites are satisfied, you can clone this repository to any expected path. 
 
 ```
-  cd ${YOUR_WORKSPACE_PATH}/src
-  git clone https://github.com/HKUST-Aerial-Robotics/Fast-Planner.git
-  cd ../
-  catkin_make
+  git clone https://github.com/SyRoCo-ISIR/DroneSys.git
+  cd DroneSys
+  wget https://raw.githubusercontent.com/mavlink/mavros/master/mavros/scripts/install_geographiclib_datasets.sh
+  sudo bash install_geographiclib_datasets.sh
+  ./compile_all.sh # compile all packages to the current path
+```
+Add the following into ```~/.bashrc```:
+```
+export PATH="/usr/lib/ccache:$PATH"
+source ~/src/DroneSys/devel/setup.bash
+export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:~/src/DroneSys/devel/lib
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:~/src/DroneSys/Simulator/gazebo_simulator/models
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:~/src/DroneSys/Simulator/gazebo_simulator/drone_models
+source ~/src/PX4_v1.12.3/Tools/setup_gazebo.bash ~/src/PX4_v1.12.3 ~/src/PX4_v1.12.3/build/px4_sitl_default
+export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/src/PX4_v1.12.3
+export ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:~/src/PX4_v1.12.3/Tools/sitl_gazebo
 ```
 
 If you encounter problems in this step, please first refer to existing __issues__, __pull requests__ and __Google__ before raising a new issue.
 
-Now you are ready to [run a simulation](#4-run-simulations).
 
-### Use GPU Depth Rendering (can be skipped optionally)
 
-This step is not mandatory for running the simulations. However, if you want to run the more realistic depth camera in __uav_simulator__, installation of [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) is needed. Otherwise, a less realistic depth sensor model will be used.
-
- The **local_sensing** package in __uav_simulator__ has the option of using GPU or CPU to render the depth sensor measurement. By default, it is set to CPU version in CMakeLists:
- 
- ```
- set(ENABLE_CUDA false)
- # set(ENABLE_CUDA true)
- ```
-However, we STRONGLY recommend the GPU version, because it generates depth images more like a real depth camera.
-To enable the GPU depth rendering, set ENABLE_CUDA to true, and also remember to change the 'arch' and 'code' flags according to your graphics card devices. You can check the right code [here](https://github.com/tpruvot/ccminer/wiki/Compatibility).
-
+### Known compilation issue
+**Joystick** is needed. You may encounter the following problems when you compile the Driver/joystick_drivers. Please make sure the following packages are installed.
 ```
-    set(CUDA_NVCC_FLAGS 
-      -gencode arch=compute_61,code=sm_61;
-    ) 
-``` 
-For installation of CUDA, please go to [CUDA ToolKit](https://developer.nvidia.com/cuda-toolkit)
-
+  libusb-dev # if missing libusb
+  libspnav-dev # if missing spnav.h
+  libbluetooth-dev # if missing bluetooth.h
+  # if missing cwiid.h:
+  git clone https://github.com/abstrakraft/cwiid.git
+  cd cwiid
+  aclocal
+  autoconf
+  ./configure
+  ## if missing pakcage gtk2.0:
+    sudo apt install libgtk2.0-dev
+  ## if missing flex:
+    sudo apt install flex
+  ## if missing bison:
+    sudo apt install bison byacc
+  ## if missing python.h:
+    sudo apt install python2.7-dev
+  make
+  ## if there is an error about wmdemo
+    # ignore it and go ahead
+  sudo make install
+```
 ## 4. Run Simulations
 
-Run [Rviz](http://wiki.ros.org/rviz) with our configuration firstly:
+Run our planner and the Gazebo simulation platform with ```roslaunch```:
 
 ```
-  <!-- go to your workspace and run: -->
-  source devel/setup.bash
-  roslaunch plan_manage rviz.launch
+  source ~/.bashrc
+  roslaunch simulation_gazebo sitl_histo_planner.launch
 ```
 
-Then run the quadrotor simulator and __Fast-Planner__. 
-Several examples are provided below:
 
-### Kinodynamic Path Searching & B-spline Optimization
-
-In this method, a kinodynamic path searching finds a safe, dynamically feasible, and minimum-time initial trajectory in the discretized control space. 
-Then the smoothness and clearance of the trajectory are improved by a B-spline optimization.
-To test this method, run:
-
-```
-  <!-- open a new terminal, go to your workspace and run: -->
-  source devel/setup.bash
-  roslaunch plan_manage kino_replan.launch
-```
-
-Normally, you will find the randomly generated map and the drone model in ```Rviz```. At this time, you can trigger the planner using the ```2D Nav Goal``` tool. When a point is clicked in ```Rviz```, a new trajectory will be generated immediately and executed by the drone. A sample is displayed below:
+Normally, you will find the randomly generated map and the drone model in ```Rviz```. At this time, you can trigger the planner using the ```3D Nav Goal``` tool. When a point is clicked in ```Rviz```, a new trajectory will be generated immediately and executed by the drone. A sample is displayed below:
 
 <!-- add some gif here -->
  <p id="demo1" align="center">
   <img src="files/ral19_3.gif" width = "480" height = "270"/>
  </p>
-
-Related algorithms are detailed in [this paper](https://ieeexplore.ieee.org/document/8758904).
-
-
-
-### Topological Path Searching & Path-guided Optimization
-
-This method features searching for multiple trajectories in distinctive topological classes. Thanks to the strategy, the solution space is explored more thoroughly, avoiding local minima and yielding better solutions.
-Similarly, run:
-
-```
-  <!-- open a new terminal, go to your workspace and run: -->
-  source devel/setup.bash
-  roslaunch plan_manage topo_replan.launch
-```
-
-then you will find the random map generated and can use the ```2D Nav Goal``` to trigger the planner:
-
-<!-- add some gif here -->
- <p align="center">
-  <img src="files/icra20_3.gif" width = "480" height = "270"/>
- </p>
-
-Related algorithms are detailed in [this paper](https://arxiv.org/abs/1912.12644).
-
-
-### Perception-aware Replanning
-
-The code will be released after the publication of [associated paper](https://arxiv.org/abs/2007.03465).
-
-
-## 5. Use in Your Application
-
-If you have successfully run the simulation and want to use __Fast-Planner__ in your project,
-please explore the files kino_replan.launch or topo_replan.launch.
-Important parameters that may be changed in your usage are contained and documented.
-
-Note that in our configuration, the size of depth image is 640x480. 
-For higher map fusion efficiency we do downsampling (in kino_algorithm.xml, skip_pixel = 2).
-If you use depth images with lower resolution (like 256x144), you might disable the downsampling by setting skip_pixel = 1. Also, the _depth_scaling_factor_ is set to 1000, which may need to be changed according to your device.
-
-Finally, for setup problem, like compilation error caused by different versions of ROS/Eigen, please first refer to existing __issues__, __pull request__, and __Google__ before raising a new issue. Insignificant issue will receive no reply.
 
 
 ## Acknowledgements
