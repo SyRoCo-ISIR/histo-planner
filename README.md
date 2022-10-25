@@ -19,6 +19,7 @@ Please kindly give us a star :star:, if you find this work useful or interesting
 * [Quick Start](#1-Quick-Start)
 * [Algorithms and Papers](#2-Algorithms-and-Papers)
 * [Setup and Config](#3-Setup-and-Config)
+* [Run Simulations](#4-Run-Simulations)
 
 
 
