@@ -11,6 +11,7 @@ Histo-Planner : A Real-time Local Planner for MAVs Teleoperation based on Histog
 **Video Links:** 
  - The submission [video](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/video_audio.mp4) shows the algorithm framework.
  - More demonstrations in the gazebo physical simulation environment: [2dLidar](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/Gazebo_2dLidar.mp4), [3dLidar](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/Gazebo_3dLidar.mp4), [Camera](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/Gazebo_Camera.mp4)
+ - More comparisons: [comparison_1](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/comparison1.mp4), [comparison_2](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/comparison2.mp4), [comparison_3](https://raw.githubusercontent.com/w407022008/histo-planner/main/documentation/videos/comparison3.mp4)
 
 Please kindly give us a star :star:, if you find this work useful or interesting. We take great efforts to develope and maintain it, thanks!:grinning:
 
